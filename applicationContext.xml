@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<!-- 读取属性配置 -->
+	<context:property-placeholder location="classpath:jdbc.properties"/>
+<!-- 	<bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"> -->
+<!-- 		<property name="locations"> -->
+<!-- 			<value>classpath:jdbc.properties</value> -->
+<!-- 		</property> -->
+<!-- 	</bean> -->
+	
+	<!-- 配置数据源 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" destroy-method="close"> 
+		<property name="url" value="${url}"></property>
+		<property name="username" value="${username}"></property>
+		<property name="password" value="${password}"></property>
+		<property name="initialSize" value="${initialSize}"></property>
+		<property name="maxActive" value="${maxActive}"></property>
+		<property name="minIdle" value="${minIdle}"></property>
+		<property name="maxWait" value="${maxWait}"></property>
+	</bean>
+	
+	<!-- 配置SqlSessionFactory > SqlSession > getMapper -->
+	<bean id="sqlSessionFactory" name="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"></property>
+		<property name="typeAliasesPackage" value="com.softeem.dto"></property>
+		<property name="mapperLocations" value="classpath:com/softeem/dao/*.xml"></property>
+<!-- 		<property name="mapperLocations"> -->
+<!-- 			<array> -->
+<!-- 				<value>com/softeem/dao/EmpMapper.xml</value> -->
+<!-- 			</array> -->
+<!-- 		</property> -->
+	</bean>
+	
+	<!-- 配置Mapper扫描器 扫描Mapper文件以及对应接口产生实现类的bean -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 指定Mapper类所在的包 -->
+		<property name="basePackage" value="com.softeem.dao"></property>
+		<!-- 指定SqlSessionFactory对应的bean名称 -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+	</bean>
+	
+	<!-- 用于处理事务的切面bean 由spring提供的事务管理器 -->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	<!-- 对指定包进行受管组件扫描 -->
+	<context:component-scan base-package="com.softeem"/>
+	
+	<!-- 配置aspectJ 自动产生代理 -->
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+	
+	<!-- 启用基于注解的声明式事务配置 -->
+	<tx:annotation-driven transaction-manager="txManager"/>
+    
+</beans>
